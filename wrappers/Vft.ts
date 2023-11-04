@@ -1,1 +1,1 @@
-export * from '../build/Vft/tact_VftMaster';
+export * from '../build/Vft/tact_VftMaster'
