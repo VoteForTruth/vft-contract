@@ -1,6 +1,6 @@
 import { Address } from 'ton-core'
 import { NetworkProvider } from '@ton-community/blueprint'
-import { VftStatement } from '../build/VftMaster/tact_VftStatement'
+import { VftStatement } from '../build/Vft/tact_VftStatement'
 
 export async function run(provider: NetworkProvider, args: string[]) {
     const ui = provider.ui()

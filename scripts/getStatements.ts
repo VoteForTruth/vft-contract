@@ -1,6 +1,6 @@
 import { VftMaster } from '../wrappers/Vft'
 import { NetworkProvider } from '@ton-community/blueprint'
-import { VftStatement } from '../build/VftMaster/tact_VftStatement'
+import { VftStatement } from '../build/Vft/tact_VftStatement'
 
 export async function run(provider: NetworkProvider) {
     const ui = provider.ui()
