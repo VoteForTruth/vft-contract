@@ -5,7 +5,11 @@ import { VftStatement } from '../build/Vft/tact_VftStatement'
 export async function run(provider: NetworkProvider) {
     const ui = provider.ui()
 
-    const vftMaster = provider.open(await VftMaster.fromInit())
+    const contract = await VftMaster.fromInit()
+
+    ui.write(`VftMaster address: ${contract.address}`)
+
+    const vftMaster = provider.open(contract)
 
     const statementsCount = await vftMaster.getStatementsCount()
 
