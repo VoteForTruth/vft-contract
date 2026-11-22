@@ -1,33 +1,24 @@
-import { toNano } from 'ton-core'
-import { VftMaster } from '../wrappers/Vft'
-import { NetworkProvider } from '@ton-community/blueprint'
+import { toNano } from '@ton/core'
+import { NetworkProvider } from '@ton/blueprint'
+import { openMaster } from '../utils/master'
 
+// args: <statement text> [url]
 export async function run(provider: NetworkProvider, args: string[]) {
     const ui = provider.ui()
+    const vftMaster = await openMaster(provider)
 
-    const vftMaster = provider.open(await VftMaster.fromInit())
+    const idx = await vftMaster.getStatementsCount()
+    const address = await vftMaster.getStatementAddress(idx)
 
-    const counterBefore = await vftMaster.getStatementsCount()
+    const statement = args[0] ?? (await ui.input('Your statement'))
+    const url = (args[1] ?? (await ui.input('Url (empty for none)'))) || null
 
-    ui.write(`Current statements count: ${counterBefore}`)
-
-    const newStatementAddress = await vftMaster.getStatementAddress(counterBefore)
-
-    const statement = args.length > 0 ? args[0] : await ui.input('Your statement')
-
-    const data = { $$type: 'VftData' as const, statement, url: null }
     await vftMaster.send(
         provider.sender(),
-        { value: toNano('0.2') },
-        {
-            $$type: 'NewParentStatement' as const,
-            data
-        }
+        { value: toNano('0.15') },
+        { $$type: 'NewParentStatement', data: { $$type: 'VftData', statement, url } }
     )
+    await provider.waitForDeploy(address)
 
-    await provider.waitForDeploy(newStatementAddress)
-
-    let counterAfter = await vftMaster.getStatementsCount()
-
-    ui.write(`Current statements count: ${counterAfter}`)
+    ui.write(`Statement #${idx} created at ${address.toString({ testOnly: provider.network() !== 'mainnet' })}`)
 }

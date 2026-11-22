@@ -1,15 +1,11 @@
-import { VftMaster } from '../wrappers/Vft'
-import { NetworkProvider } from '@ton-community/blueprint'
+import { openMaster } from '../utils/master'
+import { NetworkProvider } from '@ton/blueprint'
 import { VftStatement } from '../build/Vft/tact_VftStatement'
 
 export async function run(provider: NetworkProvider) {
     const ui = provider.ui()
 
-    const contract = await VftMaster.fromInit()
-
-    ui.write(`VftMaster address: ${contract.address}`)
-
-    const vftMaster = provider.open(contract)
+    const vftMaster = await openMaster(provider)
 
     const statementsCount = await vftMaster.getStatementsCount()
 
@@ -21,9 +17,11 @@ export async function run(provider: NetworkProvider) {
 
         const vftStatement = provider.open(VftStatement.fromAddress(statementAddress))
 
-        const data = await vftStatement.getData()
+        const info = await vftStatement.getInfo()
 
-        ui.write(`Statement ${idx} data: ${JSON.stringify(data)}`)
+        ui.write(
+            `Statement ${idx}: "${info.statement}" ${info.url ?? ''} (pro: ${info.proCount}, con: ${info.conCount})`
+        )
 
         ++idx
     }

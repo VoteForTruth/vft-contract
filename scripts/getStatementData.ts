@@ -1,5 +1,5 @@
-import { Address } from 'ton-core'
-import { NetworkProvider } from '@ton-community/blueprint'
+import { Address } from '@ton/core'
+import { NetworkProvider } from '@ton/blueprint'
 import { VftStatement } from '../build/Vft/tact_VftStatement'
 
 export async function run(provider: NetworkProvider, args: string[]) {
@@ -14,7 +14,7 @@ export async function run(provider: NetworkProvider, args: string[]) {
 
     const vftStatement = provider.open(VftStatement.fromAddress(address))
 
-    const data = await vftStatement.getData()
+    const info = await vftStatement.getInfo()
 
-    ui.write(`Statement data: ${JSON.stringify(data)}`)
+    ui.write(`Statement: "${info.statement}" ${info.url ?? ''} (pro: ${info.proCount}, con: ${info.conCount})`)
 }
