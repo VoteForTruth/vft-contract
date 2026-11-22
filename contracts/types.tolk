@@ -146,6 +146,12 @@ struct (0x56f40008) WithdrawAll {}
 // reserve returns to the author
 struct (0x56f40009) DeleteStatement {}
 
+// author -> statement: replace the source link (null removes it). The text stays
+// immutable; changes are public, the indexer keeps the history of links.
+struct (0x56f4000a) SetUrl {
+    url: string?
+}
+
 // a plain text comment from a wallet, e.g. "donate"
 struct (0x00000000) TextComment {
     text: RemainingBitsAndRefs
@@ -182,8 +188,12 @@ fun VftData.validate(self) {
     val len = self.statement.byteLength(8);
     assert (len > 0) throw Errors.EmptyStatement;
     assert (len <= MAX_STATEMENT_BYTES) throw Errors.StatementTooLong;
-    if (self.url != null) {
-        val urlLen = self.url.byteLength(4);
+    validateUrl(self.url);
+}
+
+fun validateUrl(url: string?) {
+    if (url != null) {
+        val urlLen = url.byteLength(4);
         assert (urlLen > 0) throw Errors.EmptyUrl;
         assert (urlLen <= MAX_URL_BYTES) throw Errors.UrlTooLong;
     }

@@ -320,6 +320,52 @@ get fun `test only the author deletes a statement`() {
     expect(testing.isDeployed(root.address)).toBeTrue();
 }
 
+get fun `test the author replaces and removes the source link, the text stays`() {
+    val (master, _) = setupMaster();
+    val author = testing.treasury("author");
+    val (_, root) = createRoot(master, author.address, data("thesis", "https://blocked.example"));
+    val before = balanceOf(author.address);
+
+    val res = root.sendSetUrl(author.address, "https://mirror.example", { value: grams("0.05") });
+
+    expect(res).toHaveSuccessfulTx<SetUrl>({ from: author.address, to: root.address });
+    val info = root.info();
+    expect(info.url!.equalTo("https://mirror.example")).toBeTrue();
+    expect(info.statement!.equalTo("thesis")).toBeTrue();
+    // only fees are spent; the reserve stays
+    expect(netCost(grams("0.05"), before, balanceOf(author.address))).toBeLess(FEE_TOLERANCE);
+    expect(balanceOf(root.address)).toBeLessOrEqual(STATEMENT_RESERVE);
+
+    root.sendSetUrl(author.address, null, { value: grams("0.05") });
+    expect(root.info().url == null).toBeTrue();
+
+    // works on statements with arguments too
+    val arguer = testing.treasury("arguer");
+    createChild(root, arguer.address, data("pro"), true);
+    val again = root.sendSetUrl(
+        author.address,
+        "https://web.archive.org/x",
+        { value: grams("0.05") },
+    );
+    expect(again).toHaveSuccessfulTx<SetUrl>({ to: root.address });
+}
+
+get fun `test only the author changes the link and it is validated`() {
+    val (_, author, root) = setupRoot();
+    val stranger = testing.treasury("stranger");
+
+    val res = root.sendSetUrl(stranger.address, "https://evil.example", { value: grams("0.05") });
+    expect(
+        res,
+    ).toHaveFailedTx({ from: stranger.address, to: root.address, exitCode: Errors.NotOwner });
+
+    val empty = root.sendSetUrl(author.address, "", { value: grams("0.05") });
+    expect(empty).toHaveFailedTx({ to: root.address, exitCode: Errors.EmptyUrl });
+    val long = root.sendSetUrl(author.address, repeatStr("h", 257), { value: grams("0.05") });
+    expect(long).toHaveFailedTx({ to: root.address, exitCode: Errors.UrlTooLong });
+    expect(root.info().url == null).toBeTrue();
+}
+
 // ---------------------------------------------------------------------------
 // Votes
 // ---------------------------------------------------------------------------

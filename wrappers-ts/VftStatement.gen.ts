@@ -475,6 +475,45 @@ export const DeleteStatement = {
 }
 
 /**
+ > struct (0x56f4000a) SetUrl {
+ >     url: string?
+ > }
+ */
+export interface SetUrl {
+    readonly $: 'SetUrl'
+    url: string | null
+}
+
+export const SetUrl = {
+    PREFIX: 0x56f4000a,
+
+    create(args: {
+        url: string | null
+    }): SetUrl {
+        return {
+            $: 'SetUrl',
+            ...args
+        }
+    },
+    fromSlice(s: c.Slice): SetUrl {
+        loadAndCheckPrefix32(s, 0x56f4000a, 'SetUrl');
+        return {
+            $: 'SetUrl',
+            url: s.loadBoolean() ? s.loadStringRefTail() : null,
+        }
+    },
+    store(self: SetUrl, b: c.Builder): void {
+        b.storeUint(0x56f4000a, 32);
+        storeTolkNullable<string>(self.url, b,
+            (v,b) => b.storeStringRefTail(v)
+        );
+    },
+    toCell(self: SetUrl): c.Cell {
+        return makeCellFrom<SetUrl>(self, SetUrl.store);
+    }
+}
+
+/**
  > struct (0x00000000) TextComment {
  >     text: RemainingBitsAndRefs
  > }
@@ -622,7 +661,7 @@ function calculateDeployedAddress(code: c.Cell, data: c.Cell, options: DeployedA
 }
 
 export class VftStatement implements c.Contract {
-    static CodeCell = c.Cell.fromBase64('te6ccgECGwEABMoAART/APSkE/S88sgLAQIBYgIDAfjQ+JGRMODXLCK3oAAcjm3tRND6SNMf1gD6UPQEMfiSJccF8uBlAW7y4GcE+kjU0wABktdMkjBt4iICyMwhbpMxz4GTz4PM4skFyPpSJM8LHxPOEvpUE/QAE87J7VSCCvrwgHL7AsjPhQj6UoIQVvQABM8LjssfyYEAgvsABAIBIAsMBKLg1ywit6AAFI827UTQ+kjWIPpQ9ATTH9cLHyNu8tBoBtTTAAGR1JJtAeLXCgDjDwTI+lITzvpU9ADLH8sfye1U4NcsIregACzjAtcsIAAAAAQFBgcIAf74KviS+JeCEAX14QC+8uBpeCTQAflDMDGrAiDCAPLgaoEB9Lvy4Gsibo4WdCPQAflDMDGrAiDCAPLgbIMHu/Lgbd/4KG1tJwPI+lITyx/Pg/pU9ABwzws/ycjPkVvQAA4S+lIUzCJulGwSz4GUz4MSzOLJyM+JiAFdyM+E0MzMCQH++Cr4kviXghAF9eEAvvLgaXgk0AH5QzAxqwIgwgDy4GqBAfS78uBrIm6OFnQj0AH5QzAxqwIgwgDy4GyDB7vy4G3f+ChtbSwDyPpSE8sfz4H6VPQAcM8LP8nIz5Fb0AAOEvpSFMwibpRsEs+BlM+DEsziycjPiYgBXcjPhNDMzAoBvO1E0PpIMdMgMfpQMG7y0Gj6ADAgwgDy4G74lyGCCvrwgKC+8uBpiPgo+JIByPpS+lLPhCDJyM+JiAFTEsjPhNDMzPkWzwv/gQCMzwt0EszMz5Fb0AAaAfoCyYBA+wARAO6OL4QPAYtmRvbmF0ZYxwXy9O1E0PpIMdMgMfpQMCBu8tBoyM+FCPpScM8LbsmAQPsA4NcsIregAEwxjjbtRND6SDHTIDH6UPQB0x/XCx8ibvLQaPiSI8cF8uBkAfLQcfLQccjPhQj6UnDPC27JgQCg+wDghA/y8AAs+RbPC/+BAI3PC3QSzBLMzMmAQPsApAAw+RbPC/+BAI3PC3QSzBLMzMmAQPsABaQFAgFIDQ4BQ74rJEfBRkfSkJfSlnwhBkgORnwmhmZnyLZGfFACBl/+eoQRAgFqDxAAXbdmPwVfBQ2toFkfSkK5Y+J5QAJ/Sp6ADhnhZ/kgORnwmhmZnyLZGfFACBl/+eoQAC6oM+1E0PpIMdMgMfpQMfQB0x/XCx/jBABwqgrtRNBtbQL6SNMf0gD6UPQE0x/XCx8ibpEyjhA3N9DU0wABkdSSbQHi0VBn4hBXEEYQNRAkQwABFP8A9KQT9LzyyAsSAgFiExQCzND4kZEw4NcsIregADSOP+1E0PpI+kj6ADD4kiPHBfLgZgP6ADAToAHI+lJSIPpSIfoCye1UggiYloCgcvsCyM+FCPpScM8LbsmBAIL7AODXLCK3oAA84wLXLCK3oABEMeMChA/y8BUWAgEgFxgAiu1E0PpI+kj6ADD4kiLHBfLgZAP6ADAgwgDy4G5TA7vy4G9RM6ECyPpSUhD6Ulj6AsntVMjPhQj6UgH6AnDPC2rJgED7AABC7UTQ+kgx+kgw+JIhxwXy4GTIz4UI+lJwzwtuyYEAoPsAAgJ0GRoAHbxXZ2omh9JBj9JBj9ABhAAXro72omh9JBj9JBhAABGu5XaiaH0kGEA=');
+    static CodeCell = c.Cell.fromBase64('te6ccgECHQEABVgAART/APSkE/S88sgLAQIBYgIDAfjQ+JGRMODXLCK3oAAcjm3tRND6SNMf1gD6UPQEMfiSJccF8uBlAW7y4GcE+kjU0wABktdMkjBt4iICyMwhbpMxz4GTz4PM4skFyPpSJM8LHxPOEvpUE/QAE87J7VSCCvrwgHL7AsjPhQj6UoIQVvQABM8LjssfyYEAgvsABAIBIA0OBKLg1ywit6AAFI827UTQ+kjWIPpQ9ATTH9cLHyNu8tBoBtTTAAGR1JJtAeLXCgDjDwTI+lITzvpU9ADLH8sfye1U4NcsIregACzjAtcsIAAAAAQFBgcIAf74KviS+JeCEAX14QC+8uBpeCTQAflDMDGrAiDCAPLgaoEB9Lvy4Gsibo4WdCPQAflDMDGrAiDCAPLgbIMHu/Lgbd/4KG1tJwPI+lITyx/Pg/pU9ABwzws/ycjPkVvQAA4S+lIUzCJulGwSz4GUz4MSzOLJyM+JiAFdyM+E0MzMCQH++Cr4kviXghAF9eEAvvLgaXgk0AH5QzAxqwIgwgDy4GqBAfS78uBrIm6OFnQj0AH5QzAxqwIgwgDy4GyDB7vy4G3f+ChtbSwDyPpSE8sfz4H6VPQAcM8LP8nIz5Fb0AAOEvpSFMwibpRsEs+BlM+DEsziycjPiYgBXcjPhNDMzAoBvO1E0PpIMdMgMfpQMG7y0Gj6ADAgwgDy4G74lyGCCvrwgKC+8uBpiPgo+JIByPpS+lLPhCDJyM+JiAFTEsjPhNDMzPkWzwv/gQCMzwt0EszMz5Fb0AAaAfoCyYBA+wATAvyOL4QPAYtmRvbmF0ZYxwXy9O1E0PpIMdMgMfpQMCBu8tBoyM+FCPpScM8LbsmAQPsA4NcsIregAEyONzDtRND6SDHTIDH6UPQB0x/XCx8ibvLQaPiSI8cF8uBkAfLQcfLQccjPhQj6UnDPC27JgQCg+wDg1ywit6AAVOMChA8LDAAs+RbPC/+BAI3PC3QSzBLMzMmAQPsApAAw+RbPC/+BAI3PC3QSzBLMzMmAQPsABaQFAP7tRND6SNYg+lD0BCJu8tBo+JIjxwXy4GQF0wABktdMkjBt4iBujhZ0IdAB+UMwMasCIMIA8uBsgwe78uBt3wHQ1NMAAZLUMd7RyMwhbpMxz4GTz4PM4skDyPpSEs76VPQAzsntVIIK+vCAcvsC+JLIz4UI+lJwzwtuyYEAgvsAAATy8AIBSA8QAUO+KyRHwUZH0pCX0pZ8IQZIDkZ8JoZmZ8i2RnxQAgZf/nqEEwIBahESAF23Zj8FXwUNraBZH0pCuWPieUACf0qegA4Z4Wf5IDkZ8JoZmZ8i2RnxQAgZf/nqEAAuqDPtRND6SDHTIDH6UDH0AdMf1wsf4wQAcKoK7UTQbW0C+kjTH9IA+lD0BNMf1wsfIm6RMo4QNzfQ1NMAAZHUkm0B4tFQZ+IQVxBGEDUQJEMAART/APSkE/S88sgLFAIBYhUWAszQ+JGRMODXLCK3oAA0jj/tRND6SPpI+gAw+JIjxwXy4GYD+gAwE6AByPpSUiD6UiH6AsntVIIImJaAoHL7AsjPhQj6UnDPC27JgQCC+wDg1ywit6AAPOMC1ywit6AARDHjAoQP8vAXGAIBIBkaAIrtRND6SPpI+gAw+JIixwXy4GQD+gAwIMIA8uBuUwO78uBvUTOhAsj6UlIQ+lJY+gLJ7VTIz4UI+lIB+gJwzwtqyYBA+wAAQu1E0PpIMfpIMPiSIccF8uBkyM+FCPpScM8LbsmBAKD7AAICdBscAB28V2dqJofSQY/SQY/QAYQAF66O9qJofSQY/SQYQAARruV2omh9JBhA');
 
     static Errors = {
         'Errors.NotOwner': 100,
@@ -699,6 +738,12 @@ export class VftStatement implements c.Contract {
         return DeleteStatement.toCell(DeleteStatement.create());
     }
 
+    static createCellOfSetUrl(body: {
+        url: string | null
+    }) {
+        return SetUrl.toCell(SetUrl.create(body));
+    }
+
     async sendDeploy(provider: ContractProvider, via: Sender, msgValue: coins, extraOptions?: ExtraSendOptions) {
         return provider.internal(via, {
             value: msgValue,
@@ -754,6 +799,16 @@ export class VftStatement implements c.Contract {
         return provider.internal(via, {
             value: msgValue,
             body: DeleteStatement.toCell(DeleteStatement.create()),
+            ...extraOptions
+        });
+    }
+
+    async sendSetUrl(provider: ContractProvider, via: Sender, msgValue: coins, body: {
+        url: string | null
+    }, extraOptions?: ExtraSendOptions) {
+        return provider.internal(via, {
+            value: msgValue,
+            body: SetUrl.toCell(SetUrl.create(body)),
             ...extraOptions
         });
     }

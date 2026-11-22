@@ -1,16 +1,23 @@
 import "@gen/VftVote.code"
 import "types"
 
-// A node of the tree: a root topic or a pro/con argument. Immutable after creation;
-// the author can only delete it while it has no arguments.
+// A node of the tree: a root topic or a pro/con argument. The text is immutable;
+// the author can replace the source link and delete the statement while it has
+// no arguments.
 contract VftStatement {
-    version: "2.1.0"
+    version: "2.2.0"
     description: "Vote For Truth: statement or argument"
     storage: StatementStorage
     incomingMessages: StatementMessage
 }
 
-type StatementMessage = SetStatementData | NewChildStatement | Vote | TextComment | DeleteStatement
+type StatementMessage =
+    | SetStatementData
+    | NewChildStatement
+    | Vote
+    | TextComment
+    | DeleteStatement
+    | SetUrl
 
 fun onInternalMessage(in: InMessage) {
     val msg = lazy StatementMessage.fromSlice(in.body);
@@ -116,6 +123,29 @@ fun onInternalMessage(in: InMessage) {
             });
             // SAFETY: only the author can trigger this, only without arguments; donations are forwarded at once, so the balance is the author's reserve plus this message
             refund.send(SEND_MODE_CARRY_ALL_BALANCE | SEND_MODE_DESTROY);
+        }
+
+        // The author replaces the source link, e.g. when the site is blocked or
+        // moved. The text can't change. The change returns to the author.
+        SetUrl => {
+            var storage = lazy StatementStorage.load();
+            assert (storage.owner != null) throw Errors.NotInitialized;
+            assert (in.senderAddress == storage.owner) throw Errors.NotOwner;
+            validateUrl(msg.url);
+
+            var data = storage.data!.load();
+            data.url = msg.url;
+            storage.data = data.toCell();
+            storage.save();
+
+            reserveGramsOnBalance(STATEMENT_RESERVE, RESERVE_MODE_AT_MOST);
+            val change = createMessage({
+                bounce: BounceMode.NoBounce,
+                value: 0,
+                dest: in.senderAddress,
+            });
+            // SAFETY: called after reserveGramsOnBalance(STATEMENT_RESERVE), so only the change above the reserve leaves
+            change.send(SEND_MODE_CARRY_ALL_BALANCE | SEND_MODE_IGNORE_ERRORS);
         }
 
         else => throw Errors.InvalidMessage,

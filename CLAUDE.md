@@ -9,7 +9,7 @@
 
 ```bash
 acton build                                       # компиляция
-acton test                                        # 29 тестов (tests/vft.test.tolk)
+acton test                                        # 31 тест (tests/vft.test.tolk)
 acton test --coverage                             # покрытие
 acton test --mutate --mutate-contract VftVote     # мутационное тестирование (92–95%)
 acton check && acton fmt --check                  # линтер и формат
