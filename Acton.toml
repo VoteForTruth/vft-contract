@@ -1,0 +1,49 @@
+[package]
+name = "vft-contract"
+description = "Vote For Truth smart contracts"
+version = "2.0.0"
+license = "LGPL-3.0-or-later"
+
+[toolchain]
+acton = "1.2.1"
+
+[contracts.VftMaster]
+display-name = "VftMaster"
+src = "contracts/VftMaster.tolk"
+depends = ["VftStatement"]
+
+[contracts.VftStatement]
+display-name = "VftStatement"
+src = "contracts/VftStatement.tolk"
+depends = ["VftVote"]
+
+[contracts.VftVote]
+display-name = "VftVote"
+src = "contracts/VftVote.tolk"
+depends = []
+
+[test]
+
+[fmt]
+width = 100
+ignore = []
+
+[scripts]
+# emulation (local, nothing is sent)
+deploy-emulation = "acton script scripts/deploy.tolk"
+# testnet through a TON Connect wallet
+deploy-testnet = "acton script --net testnet --tonconnect scripts/deploy.tolk"
+create-statement-testnet = "acton script --net testnet --tonconnect scripts/create-statement.tolk"
+create-argument-testnet = "acton script --net testnet --tonconnect scripts/create-argument.tolk"
+vote-testnet = "acton script --net testnet --tonconnect scripts/vote.tolk"
+revoke-testnet = "acton script --net testnet --tonconnect scripts/revoke.tolk"
+donate-testnet = "acton script --net testnet --tonconnect scripts/donate.tolk"
+inspect-testnet = "acton script --fork-net testnet scripts/inspect.tolk"
+wrappers-ts = "acton wrapper --all --ts --output-dir wrappers-ts"
+
+[import-mappings]
+acton = ".acton"
+contracts = "contracts"
+gen = "gen"
+tests = "tests"
+wrappers = "wrappers"

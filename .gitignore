@@ -1,4 +1,18 @@
 .idea
 node_modules
 temp
-build
+
+# Acton related files
+.acton/
+.studio/
+gen/
+build/
+lcov.info
+libraries.toml
+global.libraries.toml
+
+# Mnemonic and wallet files
+.env
+*.mnemonic
+wallets.toml
+global.wallets.toml
