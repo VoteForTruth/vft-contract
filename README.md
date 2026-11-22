@@ -25,7 +25,7 @@ VftMaster                      registry of root statements, owner = init paramet
 | Replace the source link | `SetUrl { url }` | statement | gas, comes back; only the author, `null` removes the link. The text never changes; the indexer keeps the public history of links |
 | Delete a statement | `DeleteStatement {}` | statement | gas; only the author and only while it has no arguments. The contract is destroyed and its reserve comes back; votes stay in their contracts and are withdrawn by their owners. The text remains in the transaction history |
 
-Limits: statement text 1..500 bytes, url 1..256 bytes (UTF-8 bytes, not characters).
+Statement data (`VftData`): text 1..500 bytes, url 1..256 bytes (UTF-8 bytes, not characters) or none, and the required language of the text — `lang`, an ISO 639-1 code as two lowercase ASCII letters in a `uint16` (`"ru"` = `0x7275`); it lets indexers filter by language.
 
 Getters: `VftMaster.statementsCount/statementAddress/owner`, `VftStatement.info/childCount/childAddress/voteAddress`, `VftVote.amount/owner/statement`. Getters are flat (no nested structs), so any client can decode them.
 

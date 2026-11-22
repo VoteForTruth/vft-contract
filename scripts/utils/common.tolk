@@ -41,6 +41,12 @@ fun inputUrl(envName: string): string? {
     return url.calculateLength() == 0 ? null : url;
 }
 
+// The language of the text, two lowercase latin letters (ISO 639-1), e.g. "ru".
+fun inputLang(envName: string): int {
+    val lang = env<string>(envName) ?? prompt("Language, 2 letters (ru, en, …)");
+    return lang.beginParse().loadUint(16);
+}
+
 fun inputAddress(envName: string, message: string): address {
     return env<address>(envName) ?? promptAddress(message);
 }
@@ -105,6 +111,7 @@ fun printStatement(statement: VftStatement) {
     );
     if (info.url != null) {
         println("    url: {}", info.url);
+        println("    lang: {}", info.lang);
     }
     println("    author: {}", info.owner);
     println("    arguments: {} pro / {} con", info.proCount, info.conCount);

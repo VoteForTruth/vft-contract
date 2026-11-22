@@ -19,6 +19,7 @@ enum Errors {
     AmountExceedsVote = 111
     InsufficientBalance = 112
     HasArguments = 113
+    InvalidLang = 114
 }
 
 // ---------------------------------------------------------------------------
@@ -43,6 +44,7 @@ const DONATE_COMMENT: slice = "donate".literalSlice()
 struct VftData {
     statement: string // short thesis, 1..MAX_STATEMENT_BYTES bytes
     url: string?      // optional link to the source / full material
+    lang: uint16      // language of the text: ISO 639-1 code as two ASCII letters, "ru" = 0x7275
 }
 
 // ---------------------------------------------------------------------------
@@ -169,6 +171,7 @@ struct StatementInfo {
     owner: address?
     statement: string?
     url: string?
+    lang: uint16 // 0 while the statement is not initialized
     proCount: uint32
     conCount: uint32
 }
@@ -189,6 +192,15 @@ fun VftData.validate(self) {
     assert (len > 0) throw Errors.EmptyStatement;
     assert (len <= MAX_STATEMENT_BYTES) throw Errors.StatementTooLong;
     validateUrl(self.url);
+    validateLang(self.lang);
+}
+
+// The language is required: exactly two lowercase latin letters (ISO 639-1).
+fun validateLang(lang: int) {
+    val first = lang >> 8;
+    val second = lang & 0xFF;
+    assert (first >= 97 && first <= 122) throw Errors.InvalidLang;
+    assert (second >= 97 && second <= 122) throw Errors.InvalidLang;
 }
 
 fun validateUrl(url: string?) {

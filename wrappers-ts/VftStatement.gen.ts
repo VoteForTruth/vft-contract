@@ -142,24 +142,28 @@ class StackReader {
 
 type coins = bigint
 
+type uint16 = bigint
 type uint32 = bigint
 
 /**
  > struct VftData {
  >     statement: string
  >     url: string?
+ >     lang: uint16
  > }
  */
 export interface VftData {
     readonly $: 'VftData'
     statement: string
     url: string | null
+    lang: uint16
 }
 
 export const VftData = {
     create(args: {
         statement: string
         url: string | null
+        lang: uint16
     }): VftData {
         return {
             $: 'VftData',
@@ -171,6 +175,7 @@ export const VftData = {
             $: 'VftData',
             statement: s.loadStringRefTail(),
             url: s.loadBoolean() ? s.loadStringRefTail() : null,
+            lang: s.loadUintBig(16),
         }
     },
     store(self: VftData, b: c.Builder): void {
@@ -178,6 +183,7 @@ export const VftData = {
         storeTolkNullable<string>(self.url, b,
             (v,b) => b.storeStringRefTail(v)
         );
+        b.storeUint(self.lang, 16);
     },
     toCell(self: VftData): c.Cell {
         return makeCellFrom<VftData>(self, VftData.store);
@@ -558,6 +564,7 @@ export const TextComment = {
  >     owner: address?
  >     statement: string?
  >     url: string?
+ >     lang: uint16
  >     proCount: uint32
  >     conCount: uint32
  > }
@@ -570,6 +577,7 @@ export interface StatementInfo {
     owner: c.Address | null
     statement: string | null
     url: string | null
+    lang: uint16
     proCount: uint32
     conCount: uint32
 }
@@ -582,6 +590,7 @@ export const StatementInfo = {
         owner: c.Address | null
         statement: string | null
         url: string | null
+        lang: uint16
         proCount: uint32
         conCount: uint32
     }): StatementInfo {
@@ -599,6 +608,7 @@ export const StatementInfo = {
             owner: s.loadMaybeAddress(),
             statement: s.loadBoolean() ? s.loadStringRefTail() : null,
             url: s.loadBoolean() ? s.loadStringRefTail() : null,
+            lang: s.loadUintBig(16),
             proCount: s.loadUintBig(32),
             conCount: s.loadUintBig(32),
         }
@@ -614,6 +624,7 @@ export const StatementInfo = {
         storeTolkNullable<string>(self.url, b,
             (v,b) => b.storeStringRefTail(v)
         );
+        b.storeUint(self.lang, 16);
         b.storeUint(self.proCount, 32);
         b.storeUint(self.conCount, 32);
     },
@@ -661,7 +672,7 @@ function calculateDeployedAddress(code: c.Cell, data: c.Cell, options: DeployedA
 }
 
 export class VftStatement implements c.Contract {
-    static CodeCell = c.Cell.fromBase64('te6ccgECHQEABVgAART/APSkE/S88sgLAQIBYgIDAfjQ+JGRMODXLCK3oAAcjm3tRND6SNMf1gD6UPQEMfiSJccF8uBlAW7y4GcE+kjU0wABktdMkjBt4iICyMwhbpMxz4GTz4PM4skFyPpSJM8LHxPOEvpUE/QAE87J7VSCCvrwgHL7AsjPhQj6UoIQVvQABM8LjssfyYEAgvsABAIBIA0OBKLg1ywit6AAFI827UTQ+kjWIPpQ9ATTH9cLHyNu8tBoBtTTAAGR1JJtAeLXCgDjDwTI+lITzvpU9ADLH8sfye1U4NcsIregACzjAtcsIAAAAAQFBgcIAf74KviS+JeCEAX14QC+8uBpeCTQAflDMDGrAiDCAPLgaoEB9Lvy4Gsibo4WdCPQAflDMDGrAiDCAPLgbIMHu/Lgbd/4KG1tJwPI+lITyx/Pg/pU9ABwzws/ycjPkVvQAA4S+lIUzCJulGwSz4GUz4MSzOLJyM+JiAFdyM+E0MzMCQH++Cr4kviXghAF9eEAvvLgaXgk0AH5QzAxqwIgwgDy4GqBAfS78uBrIm6OFnQj0AH5QzAxqwIgwgDy4GyDB7vy4G3f+ChtbSwDyPpSE8sfz4H6VPQAcM8LP8nIz5Fb0AAOEvpSFMwibpRsEs+BlM+DEsziycjPiYgBXcjPhNDMzAoBvO1E0PpIMdMgMfpQMG7y0Gj6ADAgwgDy4G74lyGCCvrwgKC+8uBpiPgo+JIByPpS+lLPhCDJyM+JiAFTEsjPhNDMzPkWzwv/gQCMzwt0EszMz5Fb0AAaAfoCyYBA+wATAvyOL4QPAYtmRvbmF0ZYxwXy9O1E0PpIMdMgMfpQMCBu8tBoyM+FCPpScM8LbsmAQPsA4NcsIregAEyONzDtRND6SDHTIDH6UPQB0x/XCx8ibvLQaPiSI8cF8uBkAfLQcfLQccjPhQj6UnDPC27JgQCg+wDg1ywit6AAVOMChA8LDAAs+RbPC/+BAI3PC3QSzBLMzMmAQPsApAAw+RbPC/+BAI3PC3QSzBLMzMmAQPsABaQFAP7tRND6SNYg+lD0BCJu8tBo+JIjxwXy4GQF0wABktdMkjBt4iBujhZ0IdAB+UMwMasCIMIA8uBsgwe78uBt3wHQ1NMAAZLUMd7RyMwhbpMxz4GTz4PM4skDyPpSEs76VPQAzsntVIIK+vCAcvsC+JLIz4UI+lJwzwtuyYEAgvsAAATy8AIBSA8QAUO+KyRHwUZH0pCX0pZ8IQZIDkZ8JoZmZ8i2RnxQAgZf/nqEEwIBahESAF23Zj8FXwUNraBZH0pCuWPieUACf0qegA4Z4Wf5IDkZ8JoZmZ8i2RnxQAgZf/nqEAAuqDPtRND6SDHTIDH6UDH0AdMf1wsf4wQAcKoK7UTQbW0C+kjTH9IA+lD0BNMf1wsfIm6RMo4QNzfQ1NMAAZHUkm0B4tFQZ+IQVxBGEDUQJEMAART/APSkE/S88sgLFAIBYhUWAszQ+JGRMODXLCK3oAA0jj/tRND6SPpI+gAw+JIjxwXy4GYD+gAwE6AByPpSUiD6UiH6AsntVIIImJaAoHL7AsjPhQj6UnDPC27JgQCC+wDg1ywit6AAPOMC1ywit6AARDHjAoQP8vAXGAIBIBkaAIrtRND6SPpI+gAw+JIixwXy4GQD+gAwIMIA8uBuUwO78uBvUTOhAsj6UlIQ+lJY+gLJ7VTIz4UI+lIB+gJwzwtqyYBA+wAAQu1E0PpIMfpIMPiSIccF8uBkyM+FCPpScM8LbsmBAKD7AAICdBscAB28V2dqJofSQY/SQY/QAYQAF66O9qJofSQY/SQYQAARruV2omh9JBhA');
+    static CodeCell = c.Cell.fromBase64('te6ccgECHwEABcEAART/APSkE/S88sgLAQIBYgIDBLDQ+JGRMODXLCK3oAAc4wLXLCK3oAAUjzjtRND6SNYg+lD0BNMf1wsfI27y0GgG1NMAAZHUkm0B4tMP1woA4w8EyPpSE876VPQAyx/LH8ntVODXLCK3oAAsBAUGBwIBIA8QAObtRND6SNMf1gD6UPQEMfiSJccF8uBlAW7y4GcE+kjU0wABkdSSbQHi1wsPIwPIzCJulGwSz4GUz4MSzOLLD8kFyPpSJM8LHxPOEvpUE/QAE87J7VSCCvrwgHL7AsjPhQj6UoIQVvQABM8LjssfyYEAgvsAAf74KviS+JeCEAX14QC+8uBpeCXQAflDMDGrAiDCAPLgaoEB9Lvy4Gsjbo4WdCTQAflDMDGrAiDCAPLgbIMHu/Lgbd8iqwcjhAewIcJglQHBe8MAkjFw4vLgciDCYJTBe8MAkjBw4vLgcvgobW0oA8j6UhPLH8+D+lT0AHDPCz/JCAH++Cr4kviXghAF9eEAvvLgaXgl0AH5QzAxqwIgwgDy4GqBAfS78uBrI26OFnQk0AH5QzAxqwIgwgDy4GyDB7vy4G3fIqsHI4QHsCHCYJUBwXvDAJIxcOLy4HIgwmCUwXvDAJIwcOLy4HL4KG1tLQPI+lITyx/PgfpU9ABwzws/yQkE9I7e7UTQ+kgx0yAx+lAwbvLQaPoAMCDCAPLgbviXIYIK+vCAoL7y4GmI+Cj4kgHI+lL6Us+EIMnIz4mIAVMSyM+E0MzM+RbPC/+BAIzPC3QSzMzPkVvQABoB+gLJgED7AODXLCAAAAAE4wLXLCK3oABM4wLXLCK3oABUFQoLDAB8yM+RW9AADhL6UhXMI26UMwLPgZTPgxPM4ssPycjPiYgBXcjPhNDMzPkWzwv/gQCNzwt0EswSzMzJgED7AKQAgMjPkVvQAA4S+lIVzCNulDMCz4GUz4MTzOLLD8nIz4mIAV3Iz4TQzMz5Fs8L/4EAjc8LdBLMEszMyYBA+wAFpAUAXoQPAYtmRvbmF0ZYxwXy9O1E0PpIMdMgMfpQMCBu8tBoyM+FCPpScM8LbsmAQPsAAG4w7UTQ+kgx0yAx+lD0AdMf1wsfIm7y0Gj4kiPHBfLgZAHy0HHy0HHIz4UI+lJwzwtuyYEAoPsAAv6O/e1E0PpI1iD6UPQEIm7y0Gj4kiPHBfLgZAXTAAGS10ySMG3iIG6OFnQh0AH5QzAxqwIgwgDy4GyDB7vy4G3fAdDU0wABktQx3tMP0QHIzCJulGwSz4GUz4MSzOLLD8kDyPpSEs76VPQAzsntVIIK+vCAcvsC+JLIz4UI+lJwDQ4AEs8LbsmBAIL7AAAK4IQP8vACAUgREgFDviskR8FGR9KQl9KWfCEGSA5GfCaGZmfItkZ8UAIGX/56hBUCAWoTFABdt2Y/BV8FDa2gWR9KQrlj4nlAAn9KnoAOGeFn+SA5GfCaGZmfItkZ8UAIGX/56hAALqgz7UTQ+kgx0yAx+lAx9AHTH9cLH+MEAHqqCu1E0G1tcAP6SNMf0gD6UPQE0x/XCx8ibpEyjhY3NzcG0NTTAAGR1JJtAeLTD9FIGFBn4hBYEEcQNkUAART/APSkE/S88sgLFgIBYhcYAszQ+JGRMODXLCK3oAA0jj/tRND6SPpI+gAw+JIjxwXy4GYD+gAwE6AByPpSUiD6UiH6AsntVIIImJaAoHL7AsjPhQj6UnDPC27JgQCC+wDg1ywit6AAPOMC1ywit6AARDHjAoQP8vAZGgIBIBscAIrtRND6SPpI+gAw+JIixwXy4GQD+gAwIMIA8uBuUwO78uBvUTOhAsj6UlIQ+lJY+gLJ7VTIz4UI+lIB+gJwzwtqyYBA+wAAQu1E0PpIMfpIMPiSIccF8uBkyM+FCPpScM8LbsmBAKD7AAICdB0eAB28V2dqJofSQY/SQY/QAYQAF66O9qJofSQY/SQYQAARruV2omh9JBhA');
 
     static Errors = {
         'Errors.NotOwner': 100,
@@ -675,6 +686,7 @@ export class VftStatement implements c.Contract {
         'Errors.UrlTooLong': 109,
         'Errors.ZeroAmount': 110,
         'Errors.HasArguments': 113,
+        'Errors.InvalidLang': 114,
         'Errors.InvalidMessage': 65535,
     }
 
@@ -814,7 +826,7 @@ export class VftStatement implements c.Contract {
     }
 
     async getInfo(provider: ContractProvider): Promise<StatementInfo> {
-        const r = StackReader.fromGetMethod(8, await provider.get('info', []));
+        const r = StackReader.fromGetMethod(9, await provider.get('info', []));
         return ({
             $: 'StatementInfo',
             parent: r.readSlice().loadAddress(),
@@ -829,6 +841,7 @@ export class VftStatement implements c.Contract {
             url: r.readNullable<string>(
                 (r) => r.readSnakeString()
             ),
+            lang: r.readBigInt(),
             proCount: r.readBigInt(),
             conCount: r.readBigInt(),
         });

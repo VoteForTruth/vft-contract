@@ -115,24 +115,28 @@ class StackReader {
 
 type coins = bigint
 
+type uint16 = bigint
 type uint32 = bigint
 
 /**
  > struct VftData {
  >     statement: string
  >     url: string?
+ >     lang: uint16
  > }
  */
 export interface VftData {
     readonly $: 'VftData'
     statement: string
     url: string | null
+    lang: uint16
 }
 
 export const VftData = {
     create(args: {
         statement: string
         url: string | null
+        lang: uint16
     }): VftData {
         return {
             $: 'VftData',
@@ -144,6 +148,7 @@ export const VftData = {
             $: 'VftData',
             statement: s.loadStringRefTail(),
             url: s.loadBoolean() ? s.loadStringRefTail() : null,
+            lang: s.loadUintBig(16),
         }
     },
     store(self: VftData, b: c.Builder): void {
@@ -151,6 +156,7 @@ export const VftData = {
         storeTolkNullable<string>(self.url, b,
             (v,b) => b.storeStringRefTail(v)
         );
+        b.storeUint(self.lang, 16);
     },
     toCell(self: VftData): c.Cell {
         return makeCellFrom<VftData>(self, VftData.store);
@@ -350,7 +356,7 @@ function calculateDeployedAddress(code: c.Cell, data: c.Cell, options: DeployedA
 }
 
 export class VftMaster implements c.Contract {
-    static CodeCell = c.Cell.fromBase64('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');
+    static CodeCell = c.Cell.fromBase64('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');
 
     static Errors = {
         'Errors.NotOwner': 100,
@@ -360,6 +366,7 @@ export class VftMaster implements c.Contract {
         'Errors.EmptyUrl': 108,
         'Errors.UrlTooLong': 109,
         'Errors.InsufficientBalance': 112,
+        'Errors.InvalidLang': 114,
         'Errors.InvalidMessage': 65535,
     }
 

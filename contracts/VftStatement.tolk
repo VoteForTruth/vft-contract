@@ -5,7 +5,7 @@ import "types"
 // the author can replace the source link and delete the statement while it has
 // no arguments.
 contract VftStatement {
-    version: "2.2.0"
+    version: "2.3.0"
     description: "Vote For Truth: statement or argument"
     storage: StatementStorage
     incomingMessages: StatementMessage
@@ -158,10 +158,12 @@ get fun info(): StatementInfo {
     val storage = lazy StatementStorage.load();
     var statement: string? = null;
     var url: string? = null;
+    var lang = 0;
     if (storage.data != null) {
         val data = storage.data.load();
         statement = data.statement;
         url = data.url;
+        lang = data.lang;
     }
     return {
         parent: storage.parent,
@@ -170,6 +172,7 @@ get fun info(): StatementInfo {
         owner: storage.owner,
         statement,
         url,
+        lang,
         proCount: storage.proCount,
         conCount: storage.conCount,
     };

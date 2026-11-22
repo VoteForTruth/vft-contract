@@ -1,5 +1,5 @@
 // Creates a root statement (topic).
-// Inputs: VFT_TEXT, VFT_URL (empty for none), VFT_MASTER (optional).
+// Inputs: VFT_TEXT, VFT_URL (empty for none), VFT_LANG (ru, en, …), VFT_MASTER (optional).
 import "@acton/io"
 import "@acton/emulation/network"
 import "@wrappers/VftMaster.gen"
@@ -11,11 +11,20 @@ fun main() {
     val master = vftMaster(wallet.address);
     val text = inputText("VFT_TEXT", "Statement text");
     val url = inputUrl("VFT_URL");
+    val lang = inputLang("VFT_LANG");
 
     val idx = master.statementsCount();
     val statement = VftStatement.fromAddress(master.statementAddress(idx));
     master
-        .sendNewParentStatement(wallet.address, { statement: text, url }, { value: CREATE_VALUE })
+        .sendNewParentStatement(
+            wallet.address,
+            {
+                statement: text,
+                url,
+                lang,
+            },
+            { value: CREATE_VALUE },
+        )
         .waitForTrace();
 
     println("Statement #{} created", idx);

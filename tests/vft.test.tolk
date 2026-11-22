@@ -15,8 +15,14 @@ const FEE_TOLERANCE = grams("0.02") // upper bound for network fees in a flow
 // Helpers
 // ---------------------------------------------------------------------------
 
-fun data(statement: string, url: string? = null): VftData {
-    return { statement, url };
+const RU = 0x7275 // "ru"
+
+fun data(statement: string, url: string? = null, lang: int = RU): VftData {
+    return {
+        statement,
+        url,
+        lang,
+    };
 }
 
 // Builds `s` repeated `times` times as a standard snake string (127 bytes per cell).
@@ -216,6 +222,47 @@ get fun `test rejects invalid text and url`() {
     expectRejected(master, author, data(repeatStr("a", 3000)), 8); // cell overflow
     expectRejected(master, author, data("x", ""), Errors.EmptyUrl);
     expectRejected(master, author, data("x", repeatStr("h", 257)), Errors.UrlTooLong);
+}
+
+get fun `test stores the language of the text`() {
+    val (master, _) = setupMaster();
+    val author = testing.treasury("author");
+
+    val (res, statement) = createRoot(master, author.address, data("English text", null, 0x656E));
+    expect(res).toHaveSuccessfulDeploy({ to: statement.address });
+    expect(statement.info().lang).toEqual(0x656E); // "en"
+
+    val arguer = testing.treasury("arguer");
+    val (_, arg) = createChild(statement, arguer.address, data("Аргумент"), true);
+    expect(arg.info().lang).toEqual(RU);
+
+    // the boundaries of the alphabet are valid
+    val (resAz, az) = createRoot(master, author.address, data("x", null, 0x617A)); // "az"
+    expect(resAz).toHaveSuccessfulDeploy({ to: az.address });
+    val (resZa, za) = createRoot(master, author.address, data("x", null, 0x7A61)); // "za"
+    expect(resZa).toHaveSuccessfulDeploy({ to: za.address });
+}
+
+get fun `test the language is required and is two lowercase latin letters`() {
+    val (master, _) = setupMaster();
+    val author = testing.treasury("author").address;
+
+    expectRejected(master, author, data("x", null, 0), Errors.InvalidLang);      // not set
+    expectRejected(master, author, data("x", null, 0x0072), Errors.InvalidLang); // one letter
+    expectRejected(master, author, data("x", null, 0x5255), Errors.InvalidLang); // "RU"
+    expectRejected(master, author, data("x", null, 0x7231), Errors.InvalidLang); // "r1"
+    expectRejected(master, author, data("x", null, 0x607A), Errors.InvalidLang); // "`z"
+    expectRejected(master, author, data("x", null, 0x7B61), Errors.InvalidLang); // "{a"
+
+    // the same for arguments
+    val (_, root) = createRoot(master, author, data("root"));
+    val res = root.sendNewChildStatement(
+        author,
+        data("arg", null, 0x5255),
+        true,
+        { value: CREATE_VALUE },
+    );
+    expect(res).toHaveFailedTx({ to: root.address, exitCode: Errors.InvalidLang });
 }
 
 get fun `test is immutable - data cannot be set by anyone but the parent`() {
