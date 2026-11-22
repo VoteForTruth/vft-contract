@@ -250,6 +250,76 @@ get fun `test rejects plain transfers and unknown comments`() {
     expect(comment).toHaveFailedTx({ to: root.address, exitCode: Errors.InvalidMessage });
 }
 
+get fun `test the author deletes a statement without arguments and gets the reserve back`() {
+    val (master, _) = setupMaster();
+    val author = testing.treasury("author");
+    val (_, root) = createRoot(master, author.address, data("hasty"));
+    val voter = testing.treasury("voter");
+    val (_, vote) = castVote(root, voter.address, grams("2"), grams("2.1"));
+    val voter2 = testing.treasury("voter2");
+    val vote2Address = root.voteAddress(voter2.address); // getters are gone after deletion
+    val before = balanceOf(author.address);
+
+    val res = root.sendDeleteStatement(author.address, { value: grams("0.05") });
+
+    expect(res).toHaveSuccessfulTx<DeleteStatement>({ from: author.address, to: root.address });
+    expect(testing.isDeployed(root.address)).toBeFalse();
+    // the reserve comes back to the author
+    val received = -netCost(grams("0.05"), before, balanceOf(author.address));
+    expect(received).toBeGreater(STATEMENT_RESERVE - FEE_TOLERANCE);
+    expect(received).toBeLessOrEqual(STATEMENT_RESERVE);
+
+    // votes live in their own contracts: the voter still takes the money back
+    val voterBefore = balanceOf(voter.address);
+    vote.sendWithdrawAll(voter.address, { value: grams("0.05") });
+    val returned = -netCost(grams("0.05"), voterBefore, balanceOf(voter.address));
+    expect(returned).toBeGreater(grams("2") + VOTE_RESERVE - FEE_TOLERANCE);
+
+    // a deleted statement takes no new votes
+    root.sendVote(voter2.address, grams("1"), { value: grams("1.1") });
+    expect(testing.isDeployed(vote2Address)).toBeFalse();
+}
+
+get fun `test a statement with arguments cannot be deleted`() {
+    val (master, author, root) = setupRoot();
+    val arguer = testing.treasury("arguer");
+
+    val (_, pro) = createChild(root, arguer.address, data("pro"), true);
+    val res = root.sendDeleteStatement(author.address, { value: grams("0.05") });
+    expect(res).toHaveFailedTx({
+        from: author.address,
+        to: root.address,
+        exitCode: Errors.HasArguments,
+    });
+    expect(testing.isDeployed(root.address)).toBeTrue();
+
+    // a con argument blocks it too; an argument itself is deletable while unanswered
+    val (_, otherRoot) = createRoot(master, author.address, data("other"));
+    createChild(otherRoot, arguer.address, data("con"), false);
+    val resCon = otherRoot.sendDeleteStatement(author.address, { value: grams("0.05") });
+    expect(resCon).toHaveFailedTx({ to: otherRoot.address, exitCode: Errors.HasArguments });
+
+    val resPro = pro.sendDeleteStatement(arguer.address, { value: grams("0.05") });
+    expect(resPro).toHaveSuccessfulTx<DeleteStatement>({ to: pro.address });
+    expect(testing.isDeployed(pro.address)).toBeFalse();
+    // the parent keeps its numbering: the next argument gets a new index
+    expect(root.childCount(true)).toEqual(1);
+}
+
+get fun `test only the author deletes a statement`() {
+    val (_, _, root) = setupRoot();
+    val stranger = testing.treasury("stranger");
+
+    val res = root.sendDeleteStatement(stranger.address, { value: grams("0.05") });
+
+    expect(res).toHaveFailedTx({
+        from: stranger.address,
+        to: root.address,
+        exitCode: Errors.NotOwner,
+    });
+    expect(testing.isDeployed(root.address)).toBeTrue();
+}
+
 // ---------------------------------------------------------------------------
 // Votes
 // ---------------------------------------------------------------------------

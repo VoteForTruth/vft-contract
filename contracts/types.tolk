@@ -18,6 +18,7 @@ enum Errors {
     ZeroAmount = 110
     AmountExceedsVote = 111
     InsufficientBalance = 112
+    HasArguments = 113
 }
 
 // ---------------------------------------------------------------------------
@@ -140,6 +141,10 @@ struct (0x56f40007) Withdraw {
 
 // owner -> vote: revoke the whole vote and destroy the contract
 struct (0x56f40008) WithdrawAll {}
+
+// author -> statement: delete it while nobody has answered it; the storage
+// reserve returns to the author
+struct (0x56f40009) DeleteStatement {}
 
 // a plain text comment from a wallet, e.g. "donate"
 struct (0x00000000) TextComment {

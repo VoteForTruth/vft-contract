@@ -8,7 +8,7 @@ Written in [Tolk](https://docs.ton.org/languages/tolk), built and tested with [A
 
 ```
 VftMaster                      registry of root statements, owner = init parameter
- └─ VftStatement (idx, pro)    root topic or argument: short thesis + url, immutable
+ └─ VftStatement (idx, pro)    root topic or argument: short thesis + url, immutable; deletable while unanswered
      ├─ VftStatement (pro)     arguments for, numbered 0..proCount-1
      ├─ VftStatement (con)     arguments against, numbered 0..conCount-1
      └─ VftVote (owner)        one vote contract per (statement, owner), holds the money
@@ -22,6 +22,7 @@ VftMaster                      registry of root statements, owner = init paramet
 | Revoke part of a vote | `Withdraw { amount }` | vote | gas, comes back |
 | Revoke the whole vote | `WithdrawAll {}` | vote | gas; the vote contract is destroyed, a new vote re-creates it |
 | Donate to the author | text comment `donate` | statement | any; can be sent from any wallet |
+| Delete a statement | `DeleteStatement {}` | statement | gas; only the author and only while it has no arguments. The contract is destroyed and its reserve comes back; votes stay in their contracts and are withdrawn by their owners. The text remains in the transaction history |
 
 Limits: statement text 1..500 bytes, url 1..256 bytes (UTF-8 bytes, not characters).
 

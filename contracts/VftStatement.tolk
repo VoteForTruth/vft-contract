@@ -1,15 +1,16 @@
 import "@gen/VftVote.code"
 import "types"
 
-// A node of the tree: a root topic or a pro/con argument. Immutable after creation.
+// A node of the tree: a root topic or a pro/con argument. Immutable after creation;
+// the author can only delete it while it has no arguments.
 contract VftStatement {
-    version: "2.0.0"
+    version: "2.1.0"
     description: "Vote For Truth: statement or argument"
     storage: StatementStorage
     incomingMessages: StatementMessage
 }
 
-type StatementMessage = SetStatementData | NewChildStatement | Vote | TextComment
+type StatementMessage = SetStatementData | NewChildStatement | Vote | TextComment | DeleteStatement
 
 fun onInternalMessage(in: InMessage) {
     val msg = lazy StatementMessage.fromSlice(in.body);
@@ -95,6 +96,26 @@ fun onInternalMessage(in: InMessage) {
                 dest: storage.owner,
             });
             donation.send(SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE);
+        }
+
+        // The author deletes the statement while nobody has answered it: arguments
+        // of other people are never deleted. Votes live in their own contracts and
+        // are withdrawn by their owners as usual. The text stays in the history of
+        // transactions — deleting only removes the contract.
+        DeleteStatement => {
+            val storage = lazy StatementStorage.load();
+            assert (storage.owner != null) throw Errors.NotInitialized;
+            assert (in.senderAddress == storage.owner) throw Errors.NotOwner;
+            assert (storage.proCount == 0) throw Errors.HasArguments;
+            assert (storage.conCount == 0) throw Errors.HasArguments;
+
+            val refund = createMessage({
+                bounce: BounceMode.NoBounce,
+                value: 0,
+                dest: storage.owner,
+            });
+            // SAFETY: only the author can trigger this, only without arguments; donations are forwarded at once, so the balance is the author's reserve plus this message
+            refund.send(SEND_MODE_CARRY_ALL_BALANCE | SEND_MODE_DESTROY);
         }
 
         else => throw Errors.InvalidMessage,
